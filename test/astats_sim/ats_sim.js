@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -20,30 +20,28 @@
 
 var myip = "127.0.0.1";
 var myport = 80;
-var config_url = "https://traffic-ops.com/CRConfig-Snapshots/cdn-name/CRConfig.json";
-var to_user = "";
-var to_password = "";
-var to_login_api = "/api/1.2/user/login";
+var to_url = process.env.TO_URL;
+var to_cdn = process.env.TO_CDN;
+var to_user = process.env.TO_USER;
+var to_password = process.env.TO_PASSWORD;
+var to_login_api = "/api/1.3/user/login";
 var simulator_ua = "ATS Simulator/node.js " + process.version;
+console.log("to_url "+to_url);
+console.log("to_cdn "+to_cdn);
+console.log("to_user "+to_user);
+console.log("to_password "+to_password);
 
-// first argument to follow node ats_sim.js
-if (process.argv[2]) {
-	config_url = process.argv[2];
+
+if (!to_url || !to_cdn || !to_user || !to_password) {
+	console.log("Please set the necessary Traffic Ops environment variables to proceeed");
+	process.exit(1);
 }
 
-// second argument to follow node ats_sim.js
-if (process.argv[3]) {
-	myport = process.argv[3];
+if (process.env.SIMULATOR_PORT) {
+	myport = process.env.SIMULATOR_PORT;
 }
 
-if (process.argv[4]) {
-	to_user = process.argv[4];
-}
-
-if (process.argv[5]) {
-	to_password = process.argv[5];
-}
-
+var config_url = to_url + "/CRConfig-Snapshots/" + to_cdn + "/CRConfig.json";
 var to_credentials = JSON.stringify({
 	"u": to_user,
 	"p": to_password,
@@ -257,15 +255,15 @@ function getData(request) {
 	var miss_changed = (unixtime / 10000000) + int1;
 	var miss_client_no_cache = 0;
 	var aborts = (unixtime / 10000000) + int2 * 2;
-	var possible_aborts = 0; 
+	var possible_aborts = 0;
 	var connect_failed = (unixtime / 1000000) + int2 * 4 + int1 * 2;
 	var other = ((unixtime / 1000000) + int3) / 100;
-	var unclassified = 0; 
+	var unclassified = 0;
 	var write_bytes = unixtime + int4 * int5;
-	var current_client_connections = Math.round(int5 * Math.random()); 
+	var current_client_connections = Math.round(int5 * Math.random());
 	var bytes_used = write_bytes / 20 + int2 * int5;
 	var bytes_total = bytes_used + int10;
-	var v1_bytes_used = bytes_used; 
+	var v1_bytes_used = bytes_used;
 	var v1_bytes_total = bytes_total;
 	var load_avg_1 = (8 * Math.random()).toFixed(2);
 	var load_avg_5 = (load_avg_1 / 2).toFixed(2);
@@ -293,7 +291,7 @@ function getData(request) {
 	var ds_500s = {};
 
 	for (var i=1; i<=10; i++) {
-		var rand1 = rand(int1); 
+		var rand1 = rand(int1);
 		ds_bytes[i] = if_tbytes / 10;
 		ds_bytes_in[i] = if_rbytes / 10;
 		var tps = basetime / 10000;
@@ -326,15 +324,15 @@ function getData(request) {
 	ret.ats["proxy.process.http.transaction_counts.miss_changed"] = miss_changed;
 	ret.ats["proxy.process.http.transaction_counts.miss_client_no_cache"] = miss_client_no_cache;
 	ret.ats["proxy.process.http.transaction_counts.errors.aborts"] = aborts;
-	ret.ats["proxy.process.http.transaction_counts.errors.possible_aborts"] = possible_aborts; 
+	ret.ats["proxy.process.http.transaction_counts.errors.possible_aborts"] = possible_aborts;
 	ret.ats["proxy.process.http.transaction_counts.errors.connect_failed"] = connect_failed;
 	ret.ats["proxy.process.http.transaction_counts.errors.other"] = other;
-	ret.ats["proxy.process.http.transaction_counts.other.unclassified"] = unclassified; 
+	ret.ats["proxy.process.http.transaction_counts.other.unclassified"] = unclassified;
 	ret.ats["proxy.process.net.write_bytes"] = write_bytes;
-	ret.ats["proxy.process.http.current_client_connections"] = current_client_connections; 
+	ret.ats["proxy.process.http.current_client_connections"] = current_client_connections;
 	ret.ats["proxy.process.cache.bytes_used"] = bytes_used;
 	ret.ats["proxy.process.cache.bytes_total"] = bytes_total;
-	ret.ats["proxy.process.cache.volume_1.bytes_used"] = v1_bytes_used; 
+	ret.ats["proxy.process.cache.volume_1.bytes_used"] = v1_bytes_used;
 	ret.ats["proxy.process.cache.volume_1.bytes_total"] = v1_bytes_total;
 
 	if (cr_config && cr_config.contentServers && server_name in cr_config.contentServers) {
