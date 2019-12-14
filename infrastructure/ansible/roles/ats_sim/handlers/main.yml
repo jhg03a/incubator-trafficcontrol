@@ -12,17 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-- name: Restart simulator
+- name: Enable simulator on startup
+  systemd:
+    name: simulator
+    enabled: yes
+  notify:
+    - restart simulator
+
+- name: restart simulator
   service:
     name: simulator
     state: restarted
     daemon_reload: yes
   notify: Wait for simulator to become available
 
-- name: Wait for HTTP simulator to become available
+- name: Wait for ATS simulator to become available
   wait_for:
     delay: 15
     sleep: 15
     timeout: 1200
-    port: "{{ simulator_port }}"
+    port: "{{ ats_sim_port }}"
   listen: Wait for simulator to become available
+
+- name: delete tmpDir
+  file:
+    path: "{{ tmpDir.path }}"
+    state: absent
+  when: tmpDir

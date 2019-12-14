@@ -22,7 +22,7 @@
 
 - name: Create install directory
   file:
-    path: "{{sim_install_dir}}"
+    path: "{{ ats_sim_install_dir }}"
     state: directory
     owner: root
     group: root
@@ -30,7 +30,7 @@
 - name: Copy environment file
   template:
     src: "env.j2"
-    dest: "{{ sim_install_dir }}/env"
+    dest: "{{ ats_sim_install_dir }}/env"
     owner: root
     group: root
     mode: 0644
@@ -42,25 +42,32 @@
     owner: root
     group: root
     mode: 0555
+  notify:
+    - restart simulator
+
+- name: Create Temporary Directory
+  tempfile:
+    state: directory
+    suffix: tc
+  register: tmpDir
 
 - name: Git ats_sim.js file
   git:
-    repo: "{{ sim_git_repo }}"
-    dest: /tmp/tc
-    version: "{{ sim_git_version }}"
+    repo: "{{ ats_sim_git_repo }}"
+    dest: {{ tmpDir }}
+    version: "{{ ats_sim_git_version }}"
     accept_hostkey: yes
+  when: ats_sim_git_repo
 
 - name: Copy Javascript file to intall directory
   copy:
     remote_src: yes
-    src: "/tmp/tc/test/astats_sim/ats_sim.js"
-    dest: "{{ sim_install_dir }}"
+    src: "{{ tmpDir }}/test/astats_sim/ats_sim.js"
+    dest: "{{ ats_sim_install_dir }}"
     owner: root
     group: root
     mode: 0644
-
-- name: Enable simulator on startup
-  systemd:
-    name: simulator
-    enabled: yes
-    state: restarted
+  when: tmpDir
+  notify:
+    - delete tmpDir
+    - restart simulator

@@ -44,12 +44,12 @@ Example Playbook
       name: ats_sim
     vars:
       install_ats_sim: true
-      sim_to_url: https://to.exenv.cdnlab.comcast.net
-      sim_to_user: {{ to_user }}
-      sim_to_password: {{ to_password }}
-      sim_to_cdn: Kabletown2.0
-      sim_git_repo: "https://github.com/apache/trafficcontrol.git"
-      sim_git_version: master
+      ats_sim_to_url: {{ to_url }}
+      ats_sim_to_user: {{ to_user }}
+      ats_sim_to_password: {{ to_password }}
+      ats_sim_to_cdn: Kabletown2.0
+      ats_sim_git_repo: "https://github.com/apache/trafficcontrol.git"
+      ats_sim_git_version: master
 ```
 
 License

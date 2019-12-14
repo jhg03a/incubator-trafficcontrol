@@ -15,13 +15,13 @@
 install_ats_sim: false
 
 # Installation location information
-sim_install_dir: /usr/local/simulator
+ats_sim_install_dir: /usr/local/simulator
 
 # env dependencies
-sim_to_url:
-sim_to_cdn: "trtest"
-sim_to_user: "admin"
-sim_to_password:
-simulator_port: 8090
-sim_git_repo: "https://github.com/apache/trafficcontrol.git"
-sim_git_version: master
+ats_sim_to_url:
+ats_sim_to_cdn: "trtest"
+ats_sim_to_user: "admin"
+ats_sim_to_password:
+ats_sim_port: 8090
+ats_sim_git_repo: "https://github.com/apache/trafficcontrol.git"
+ats_sim_git_version: master

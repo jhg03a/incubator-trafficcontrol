@@ -5,8 +5,8 @@ After=syslog.target network.target
 [Service]
 PIDFile=/var/run/simulator.pid
 Type=simple
-EnvironmentFile={{sim_install_dir}}/env
-ExecStart=/bin/node {{sim_install_dir}}/ats_sim.js
+EnvironmentFile={{ ats_sim_install_dir }}/env
+ExecStart=/bin/node {{ ats_sim_install_dir }}/ats_sim.js
 ExecStop=/bin/kill $(cat /var/run/simulator.pid)
 LimitNOFILE=500000
 User=root
