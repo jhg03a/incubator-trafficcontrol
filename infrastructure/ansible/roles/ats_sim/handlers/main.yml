@@ -24,7 +24,8 @@
     name: simulator
     state: restarted
     daemon_reload: yes
-  notify: Wait for simulator to become available
+  notify:
+    - Wait for ATS simulator to become available
 
 - name: Wait for ATS simulator to become available
   wait_for:
@@ -32,7 +33,6 @@
     sleep: 15
     timeout: 1200
     port: "{{ ats_sim_port }}"
-  listen: Wait for simulator to become available
 
 - name: delete tmpDir
   file:

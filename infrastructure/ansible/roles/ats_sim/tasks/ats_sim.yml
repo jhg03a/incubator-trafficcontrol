@@ -51,18 +51,17 @@
     suffix: tc
   register: tmpDir
 
-- name: Git ats_sim.js file
+- name: Git Simulator from Source Control
   git:
-    repo: "{{ ats_sim_git_repo }}"
-    dest: {{ tmpDir }}
+    repo: 'https://github.com/apache/trafficcontrol.git'
+    dest: "{{ tmpDir.path }}"
     version: "{{ ats_sim_git_version }}"
     accept_hostkey: yes
-  when: ats_sim_git_repo
 
 - name: Copy Javascript file to intall directory
   copy:
     remote_src: yes
-    src: "{{ tmpDir }}/test/astats_sim/ats_sim.js"
+    src: "{{ tmpDir.path }}/test/astats_sim/ats_sim.js"
     dest: "{{ ats_sim_install_dir }}"
     owner: root
     group: root
