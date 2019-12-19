@@ -53,10 +53,11 @@
 
 - name: Git Simulator from Source Control
   git:
-    repo: 'https://github.com/apache/trafficcontrol.git'
+    repo: "{{ ats_sim_git_repo }}"
     dest: "{{ tmpDir.path }}"
     version: "{{ ats_sim_git_version }}"
     accept_hostkey: yes
+  when: tmpDir
 
 - name: Copy Javascript file to intall directory
   copy:
