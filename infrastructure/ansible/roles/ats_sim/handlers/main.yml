@@ -1,0 +1,41 @@
+---
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+- name: Enable simulator on startup
+  systemd:
+    name: simulator
+    enabled: yes
+  notify:
+    - restart simulator
+
+- name: restart simulator
+  service:
+    name: simulator
+    state: restarted
+    daemon_reload: yes
+  notify:
+    - Wait for ATS simulator to become available
+
+- name: Wait for ATS simulator to become available
+  wait_for:
+    delay: 15
+    sleep: 15
+    timeout: 1200
+    port: "{{ ats_sim_port }}"
+
+- name: delete tmpDir
+  file:
+    path: "{{ tmpDir.path }}"
+    state: absent
+  when: tmpDir
