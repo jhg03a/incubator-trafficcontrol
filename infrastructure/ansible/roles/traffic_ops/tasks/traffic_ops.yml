@@ -56,15 +56,19 @@
       no_log: true
 
     - name: Run Traffic Ops Postinstall
-      command: "{{ to_install_bin_installdir }}/postinstall -a -cfile {{ to_install_bin_installdir }}/configuration_file.json"
+      shell: "{{ to_install_bin_installdir }}/postinstall -a -cfile {{ to_install_bin_installdir }}/configuration_file.json 2>&1"
       notify: Restart Traffic Ops
       environment:
         GOPATH: /opt/traffic_ops/go
+        GOBIN: /opt/traffic_ops/go/bin
+        PATH: "{{ lookup('env','PATH') }}:/opt/traffic_ops/go/bin:/usr/local/go/bin"
       register: Postinstall_output
       failed_when:
         (Postinstall_output.stdout.find("Success! Postinstall complete.") == -1) or
         (Postinstall_output.rc != 0) or
-        (Postinstall_output.stderr.find("Installing modules failed") != -1)
+        (Postinstall_output.stderr.find("Installing modules failed") != -1) or
+        (Postinstall_output.stdout.find("Installing modules failed") != -1) or
+        (Postinstall_output.stdout.find("Database migrate failed") != -1)
 
     - name: Mark Postinstall was successful
       file:
@@ -112,14 +116,19 @@
   notify: Restart Traffic Ops
 
 - name: Upgrade TODB
-  command: ./db/admin -env=production upgrade
+  shell: ./db/admin -env=production upgrade
   args:
     chdir: "{{ to_app_installdir }}"
   environment:
-    PATH: "{{ lookup('env', 'PATH') }}:{{ to_base_installdir }}/go/bin"
+    PATH: "{{ lookup('env', 'PATH') }}:{{ to_base_installdir }}/go/bin:/usr/local/go/bin"
     PERL5LIB: ./lib:./local/lib/perl5
     GOPATH: /opt/traffic_ops/go
+    GOBIN: /opt/traffic_ops/go/bin
+  failed_when:
+    (db_migrations_output.stdout.find("Can't run goose") != -1) or
+    (db_migrations_output.rc != 0)
   run_once: true
+  register: db_migrations_output
 
 - name: Initialize Riak SOLR
   block:
@@ -135,6 +144,7 @@
         headers:
           Content-Type: application/xml
         status_code: 200,204
+      no_log: true
 
     - name: Add search index
       uri:
@@ -147,6 +157,7 @@
         body:
           schema: sslkeys
         status_code: 200,204
+      no_log: true
 
     - name: Associate search index to bucket
       uri:
@@ -160,4 +171,5 @@
           props:
             search_index: sslkeys
         status_code: 200,204
+      no_log: true
   run_once: true
