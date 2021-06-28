@@ -33,6 +33,7 @@
         /opt/ort/supermicro_udev_mapper.pl
       {%- endif -%}
     dest: /bin/supermicro_udev_mapper.pl
+    remote_src: true
     owner: root
     group: root
     mode: 0755
@@ -78,9 +79,72 @@
   async: 1
   poll: 0
 
+- name: Allow the host to go down
+  pause:
+    seconds: 60
+
 - name: Wait for the reboot to complete
   wait_for_connection:
-    connect_timeout: 20
-    sleep: 5
-    delay: 5
-    timeout: 300
+    connect_timeout: 40
+    sleep: 10
+    delay: 10
+    timeout: 600
+
+- name: Reset ATS Cache Data
+  block:
+    - name: Stop ATS gracefully
+      systemd:
+        name: trafficserver
+        state: stopped
+      ignore_errors: yes
+
+    - name: Ask ATS to destroy all its data nicely
+      command: /opt/trafficserver/bin/traffic_server -Cclear
+
+    - name: Get list of targeted ATS cache disks
+      shell: cat /opt/trafficserver/etc/trafficserver/storage.config | grep -v '#' | cut -d' ' -f1
+      register: cachedisk_results
+      changed_when: false
+
+    - name: Remove from fstab
+      lineinfile:
+        path: /etc/fstab
+        state: absent
+        regexp: "{{ item }}.*"
+      with_items: "{{ cachedisk_results.stdout_lines }}"
+
+    - name: Unmount the disk
+      command: "umount -l {{ item }}"
+      with_items: "{{ cachedisk_results.stdout_lines }}"
+      register: umountresults
+      failed_when: false
+      changed_when: "'not mounted' not in umountresults.stderr"
+
+    - name: Nuke the disk partition table
+      command: "dd if=/dev/zero of={{ item }} bs=2048 count=1"
+      with_items: "{{ cachedisk_results.stdout_lines }}"
+      register: ddresults
+      changed_when: "'2048 bytes (2.0 kB) copied' in ddresults.stderr"
+
+    - name: Restart ATS with clean cache disks
+      systemd:
+        name: trafficserver
+        state: started
+  when: ats_clear_data | default(false)
+
+- name: Ensure ATS is listening - 80
+  wait_for:
+    host: "{{ hostvars[inventory_hostname].ansible_host }}"
+    port: 80
+
+- name: Ensure ATS is listening - 443
+  wait_for:
+    host: "{{ hostvars[inventory_hostname].ansible_host }}"
+    port: 443
+  when: hostvars[inventory_hostname].component == "atsec"
+
+- name: Ensure Astats responds
+  uri:
+    url: http://localhost/_astats
+    validate_certs: false
+  when: hostvars[inventory_hostname].component == "atsec"
